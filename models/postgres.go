@@ -10,6 +10,7 @@ import (
 
 func init() {
 	viper.SetConfigFile("app.env")
+
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Fatal("can not load config:", err)

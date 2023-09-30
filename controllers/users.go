@@ -34,8 +34,10 @@ func (u Users) Create(w http.ResponseWriter, r *http.Request) {
 		Email    string
 		Password string
 	}
+
 	data.Email = r.PostForm.Get("email")
 	data.Password = r.PostForm.Get("password")
+
 	user, err := u.UserService.Create(data.Email, data.Password)
 	if err != nil {
 		fmt.Println(err)
@@ -50,7 +52,9 @@ func (u Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Email string
 	}
+
 	data.Email = r.FormValue("email")
+
 	u.Templates.SignIn.Execute(w, data)
 }
 
@@ -65,6 +69,7 @@ func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 		Email    string
 		Password string
 	}
+
 	data.Email = r.PostForm.Get("email")
 	data.Password = r.PostForm.Get("password")
 
