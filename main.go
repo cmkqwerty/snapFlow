@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/cmkqwerty/snapFlow/controllers"
+	"github.com/cmkqwerty/snapFlow/models"
 	"github.com/cmkqwerty/snapFlow/templates"
 	"github.com/cmkqwerty/snapFlow/views"
 	"github.com/go-chi/chi/v5"
@@ -21,7 +22,21 @@ func main() {
 	tpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml", "tailwind.gohtml"))
 	r.Get("/faq", controllers.FAQ(tpl))
 
-	var usersC controllers.Users
+	cfg := models.DefaultPostgresConfig()
+	db, err := models.Open(cfg)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	userService := models.UserService{
+		DB: db,
+	}
+
+	usersC := controllers.Users{
+		UserService: &userService,
+	}
+
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
 	r.Get("/signup", usersC.New)
 	r.Post("/signup", usersC.Create)
