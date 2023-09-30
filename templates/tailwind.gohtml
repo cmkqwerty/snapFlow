@@ -4,11 +4,31 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+        <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+              rel="stylesheet">
     </head>
     <body>
-{{end}}
-<!-- Each page's content goes here. -->
+    <header class="bg-gradient-to-r from-purple-700 to-indigo-800 text-white">
+        <nav class="px-8 py-6 flex items-center space-x-12">
+            <div class="text-4xl font-serif">SnapFlow</div>
+            <div class="flex-grow">
+                <a class="text-lg font-semibold hover:text-purple-100 pr-8" href="/">
+                    Home
+                </a>
+                <a class="text-lg font-semibold hover:text-purple-100 pr-8" href="/contact">
+                    Contact
+                </a>
+                <a class="text-lg font-semibold hover:text-purple-100 pr-8" href="/faq">
+                    FAQ
+                </a> </div>
+            <div class="space-x-4">
+                <a href="#">Sign in</a>
+                <a href="#" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded">
+                    Sign up
+                </a> </div>
+        </nav>
+    </header>
+{{end}}<!-- Each page's content goes here. -->
 {{define "footer"}}
     </body>
     </html>
