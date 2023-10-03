@@ -22,9 +22,15 @@
                     FAQ
                 </a> </div>
             <div class="space-x-4">
-                <a href="/signin">Sign in</a>
+                <form action="/signout" method="post" class="inline pr-4">
+                    <div class="hidden">
+                        {{csrfField}}
+                    </div>
+                    <button type="submit">Sign Out</button>
+                </form>
+                <a href="/signin">Sign In</a>
                 <a href="/signup" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded">
-                    Sign up
+                    Sign Up
                 </a> </div>
         </nav>
     </header>
