@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/cmkqwerty/snapFlow/configs"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/pressly/goose/v3"
+	"io/fs"
 )
 
 func Open(config PostgresConfig) (*sql.DB, error) {
@@ -14,6 +16,34 @@ func Open(config PostgresConfig) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func Migrate(db *sql.DB, dir string) error {
+	err := goose.SetDialect("postgres")
+	if err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+
+	err = goose.Up(db, dir)
+	if err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+
+	return nil
+}
+
+func MigrateFS(db *sql.DB, migrationsFS fs.FS, dir string) error {
+	if dir == "" {
+		dir = "."
+	}
+
+	goose.SetBaseFS(migrationsFS)
+
+	defer func() {
+		goose.SetBaseFS(nil)
+	}()
+
+	return Migrate(db, dir)
 }
 
 func DefaultPostgresConfig() PostgresConfig {

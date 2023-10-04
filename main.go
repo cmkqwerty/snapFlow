@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cmkqwerty/snapFlow/configs"
 	"github.com/cmkqwerty/snapFlow/controllers"
+	"github.com/cmkqwerty/snapFlow/migrations"
 	"github.com/cmkqwerty/snapFlow/models"
 	"github.com/cmkqwerty/snapFlow/templates"
 	"github.com/cmkqwerty/snapFlow/views"
@@ -31,6 +32,11 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
+
+	err = models.MigrateFS(db, migrations.FS, ".")
+	if err != nil {
+		panic(err)
+	}
 
 	userService := models.UserService{
 		DB: db,
