@@ -22,17 +22,19 @@
                 <a class="text-lg font-semibold hover:text-purple-100 pr-8" href="/faq">
                     FAQ
                 </a> </div>
-            <div class="space-x-4">
-                <form action="/signout" method="post" class="inline pr-4">
-                    <div class="hidden">
-                        {{csrfField}}
-                    </div>
-                    <button type="submit">Sign Out</button>
-                </form>
-                <a href="/signin">Sign In</a>
-                <a href="/signup" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded">
-                    Sign Up
-                </a> </div>
+            <div>
+                {{if currentUser}}
+                    <form action="/signout" method="post" class="inline pr-4">
+                        <div class="hidden">
+                            {{csrfField}}
+                        </div>
+                        <button type="submit">Sign out</button>
+                    </form>
+                {{else}}
+                    <a class="pr-4" href="/signin">Sign in</a>
+                    <a class="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded" href="/signup">Sign up</a>
+                {{end}}
+            </div>
         </nav>
     </header>
 {{end}}<!-- Each page's content goes here. -->

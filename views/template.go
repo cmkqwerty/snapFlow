@@ -3,6 +3,8 @@ package views
 import (
 	"bytes"
 	"fmt"
+	"github.com/cmkqwerty/snapFlow/context"
+	"github.com/cmkqwerty/snapFlow/models"
 	"github.com/gorilla/csrf"
 	"html/template"
 	"io"
@@ -16,7 +18,10 @@ func ParseFS(fs fs.FS, pattern ...string) (Template, error) {
 	htmlTpl = htmlTpl.Funcs(
 		template.FuncMap{
 			"csrfField": func() (template.HTML, error) {
-				return "", fmt.Errorf("csrfField not implemented")
+				return "", fmt.Errorf("csrfField is not implemented")
+			},
+			"currentUser": func() (*models.User, error) {
+				return nil, fmt.Errorf("currentUser is not implemented")
 			},
 		},
 	)
@@ -47,6 +52,9 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		template.FuncMap{
 			"csrfField": func() template.HTML {
 				return csrf.TemplateField(r)
+			},
+			"currentUser": func() *models.User {
+				return context.User(r.Context())
 			},
 		},
 	)

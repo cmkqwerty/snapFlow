@@ -14,17 +14,6 @@ import (
 )
 
 func main() {
-	r := chi.NewRouter()
-
-	tpl := views.Must(views.ParseFS(templates.FS, "home.gohtml", "tailwind.gohtml"))
-	r.Get("/", controllers.StaticHandler(tpl))
-
-	tpl = views.Must(views.ParseFS(templates.FS, "contact.gohtml", "tailwind.gohtml"))
-	r.Get("/contact", controllers.StaticHandler(tpl))
-
-	tpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml", "tailwind.gohtml"))
-	r.Get("/faq", controllers.FAQ(tpl))
-
 	cfg := models.DefaultPostgresConfig()
 
 	db, err := models.Open(cfg)
@@ -46,10 +35,35 @@ func main() {
 		DB: db,
 	}
 
+	um := controllers.UserMiddleware{
+		SessionService: &sessionService,
+	}
+
+	csrfKey := configs.ReadKey("CSRF_KEY")
+	csrfMw := csrf.Protect(
+		[]byte(csrfKey),
+		// TODO: Make it "true" before deploy
+		csrf.Secure(false),
+	)
+
 	usersC := controllers.Users{
 		UserService:    &userService,
 		SessionService: &sessionService,
 	}
+
+	r := chi.NewRouter()
+
+	r.Use(csrfMw)
+	r.Use(um.SetUser)
+
+	tpl := views.Must(views.ParseFS(templates.FS, "home.gohtml", "tailwind.gohtml"))
+	r.Get("/", controllers.StaticHandler(tpl))
+
+	tpl = views.Must(views.ParseFS(templates.FS, "contact.gohtml", "tailwind.gohtml"))
+	r.Get("/contact", controllers.StaticHandler(tpl))
+
+	tpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml", "tailwind.gohtml"))
+	r.Get("/faq", controllers.FAQ(tpl))
 
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
 	r.Get("/signup", usersC.New)
@@ -62,19 +76,15 @@ func main() {
 	r.Post("/signout", usersC.ProcessSignOut)
 
 	usersC.Templates.UsersMe = views.Must(views.ParseFS(templates.FS, "currentuser.gohtml", "tailwind.gohtml"))
-	r.Get("/users/me", usersC.CurrentUser)
+	r.Route("/users/me", func(r chi.Router) {
+		r.Use(um.RequireUser)
+		r.Get("/", usersC.CurrentUser)
+	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
 
-	csrfKey := configs.ReadKey("CSRF_KEY")
-	csrfMw := csrf.Protect(
-		[]byte(csrfKey),
-		// TODO: Make it "true" before deploy
-		csrf.Secure(false),
-	)
-
 	fmt.Println("Starting the server on :3000...")
-	http.ListenAndServe(":3000", csrfMw(r))
+	http.ListenAndServe(":3000", r)
 }
