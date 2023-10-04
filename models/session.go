@@ -1,15 +1,8 @@
 package models
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/base64"
 	"fmt"
-	"github.com/cmkqwerty/snapFlow/rand"
-)
-
-const (
-	minBytesPerToken = 32
 )
 
 type Session struct {
@@ -20,17 +13,12 @@ type Session struct {
 }
 
 type SessionService struct {
-	DB            *sql.DB
-	BytesPerToken int
+	DB           *sql.DB
+	TokenManager TokenManager
 }
 
 func (ss *SessionService) Create(userID int) (*Session, error) {
-	bytesPerToken := ss.BytesPerToken
-	if bytesPerToken < minBytesPerToken {
-		bytesPerToken = minBytesPerToken
-	}
-
-	token, err := rand.String(bytesPerToken)
+	token, tokenHash, err := ss.TokenManager.New()
 	if err != nil {
 		return nil, fmt.Errorf("create: %w", err)
 	}
@@ -38,7 +26,7 @@ func (ss *SessionService) Create(userID int) (*Session, error) {
 	session := Session{
 		UserID:    userID,
 		Token:     token,
-		TokenHash: ss.hash(token),
+		TokenHash: tokenHash,
 	}
 
 	row := ss.DB.QueryRow(`
@@ -63,7 +51,7 @@ func (ss *SessionService) Create(userID int) (*Session, error) {
 }
 
 func (ss *SessionService) User(token string) (*User, error) {
-	tokenHash := ss.hash(token)
+	tokenHash := ss.TokenManager.hash(token)
 
 	var user User
 	row := ss.DB.QueryRow(`
@@ -87,7 +75,7 @@ func (ss *SessionService) User(token string) (*User, error) {
 }
 
 func (ss *SessionService) Delete(token string) error {
-	tokenHash := ss.hash(token)
+	tokenHash := ss.TokenManager.hash(token)
 
 	_, err := ss.DB.Exec(`
 	DELETE FROM sessions
@@ -97,10 +85,4 @@ func (ss *SessionService) Delete(token string) error {
 	}
 
 	return nil
-}
-
-func (ss *SessionService) hash(token string) string {
-	tokenHash := sha256.Sum256([]byte(token))
-
-	return base64.URLEncoding.EncodeToString(tokenHash[:])
 }
