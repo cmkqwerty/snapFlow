@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
               rel="stylesheet">
+        <title>SnapFlow</title>
     </head>
     <body class="min-h-screen bg-gray-100">
     <header class="bg-gradient-to-r from-purple-700 to-indigo-800 text-white">
@@ -22,9 +23,15 @@
                     FAQ
                 </a> </div>
             <div class="space-x-4">
-                <a href="/signin">Sign in</a>
+                <form action="/signout" method="post" class="inline pr-4">
+                    <div class="hidden">
+                        {{csrfField}}
+                    </div>
+                    <button type="submit">Sign Out</button>
+                </form>
+                <a href="/signin">Sign In</a>
                 <a href="/signup" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded">
-                    Sign up
+                    Sign Up
                 </a> </div>
         </nav>
     </header>

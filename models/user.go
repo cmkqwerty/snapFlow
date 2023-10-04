@@ -19,19 +19,23 @@ type UserService struct {
 
 func (us *UserService) Create(email, password string) (*User, error) {
 	email = strings.ToLower(email)
+
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("create user: %w", err)
 	}
 
 	passwordHash := string(hashedBytes)
+
 	user := User{
 		Email:        email,
 		PasswordHash: passwordHash,
 	}
+
 	row := us.DB.QueryRow(`
 		INSERT INTO users (email, password_hash)
 		VALUES ($1, $2) RETURNING id`, email, passwordHash)
+
 	err = row.Scan(&user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("create user: %w", err)
@@ -42,6 +46,7 @@ func (us *UserService) Create(email, password string) (*User, error) {
 
 func (us UserService) Authenticate(email, password string) (*User, error) {
 	email = strings.ToLower(email)
+
 	user := User{
 		Email: email,
 	}
@@ -50,6 +55,7 @@ func (us UserService) Authenticate(email, password string) (*User, error) {
 	SELECT id, password_hash
 	FROM users
 	WHERE email=$1`, email)
+
 	err := row.Scan(&user.ID, &user.PasswordHash)
 	if err != nil {
 		return nil, fmt.Errorf("authenticate: %w", err)

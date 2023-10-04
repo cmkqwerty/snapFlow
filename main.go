@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/cmkqwerty/snapFlow/configs"
 	"github.com/cmkqwerty/snapFlow/controllers"
 	"github.com/cmkqwerty/snapFlow/models"
 	"github.com/cmkqwerty/snapFlow/templates"
 	"github.com/cmkqwerty/snapFlow/views"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/csrf"
 	"net/http"
 )
 
@@ -23,6 +25,7 @@ func main() {
 	r.Get("/faq", controllers.FAQ(tpl))
 
 	cfg := models.DefaultPostgresConfig()
+
 	db, err := models.Open(cfg)
 	if err != nil {
 		panic(err)
@@ -33,8 +36,13 @@ func main() {
 		DB: db,
 	}
 
+	sessionService := models.SessionService{
+		DB: db,
+	}
+
 	usersC := controllers.Users{
-		UserService: &userService,
+		UserService:    &userService,
+		SessionService: &sessionService,
 	}
 
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
@@ -45,9 +53,22 @@ func main() {
 	r.Get("/signin", usersC.SignIn)
 	r.Post("/signin", usersC.ProcessSignIn)
 
+	r.Post("/signout", usersC.ProcessSignOut)
+
+	usersC.Templates.UsersMe = views.Must(views.ParseFS(templates.FS, "currentuser.gohtml", "tailwind.gohtml"))
+	r.Get("/users/me", usersC.CurrentUser)
+
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
+
+	csrfKey := configs.ReadKey("CSRF_KEY")
+	csrfMw := csrf.Protect(
+		[]byte(csrfKey),
+		// TODO: Make it "true" before deploy
+		csrf.Secure(false),
+	)
+
 	fmt.Println("Starting the server on :3000...")
-	http.ListenAndServe(":3000", r)
+	http.ListenAndServe(":3000", csrfMw(r))
 }

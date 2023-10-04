@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+          rel="stylesheet">
+    <title>User Profile</title>
+</head>
+<body class="min-h-screen bg-gray-100">
+<header class="bg-gradient-to-r from-purple-700 to-indigo-800 text-white">
+    <nav class="px-8 py-6 flex items-center space-x-12">
+        <div class="text-4xl font-serif">SnapFlow</div>
+        <div class="flex-grow">
+            <a class="text-lg font-semibold hover:text-purple-100 pr-8" href="/">
+                Home
+            </a>
+            <a class="text-lg font-semibold hover:text-purple-100 pr-8" href="/contact">
+                Contact
+            </a>
+            <a class="text-lg font-semibold hover:text-purple-100 pr-8" href="/faq">
+                FAQ
+            </a> </div>
+        <div class="space-x-4">
+            <form action="/signout" method="post" class="inline pr-4">
+                <div class="hidden">
+                    {{csrfField}}
+                </div>
+                <button type="submit">Sign Out</button>
+            </form>
+        </div>
+    </nav>
+</header>
+<div class="py-12 flex justify-center">
+    <div class="px-8 py-8 bg-white rounded shadow">
+    <h1 class="pt-4 pb-8 text-center text-3xl font-bold text-gray-900">User Details</h1>
+    <p class="text-sm font-semibold text-gray-800"><b>Email:</b> {{.Email}}</p>
+    </div>
+</div>
+{{template "footer" .}}

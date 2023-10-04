@@ -3,18 +3,9 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"github.com/cmkqwerty/snapFlow/configs"
 	_ "github.com/jackc/pgx/v4/stdlib"
-	"github.com/spf13/viper"
-	"log"
 )
-
-func init() {
-	viper.SetConfigFile("app.env")
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Fatal("can not load config:", err)
-	}
-}
 
 func Open(config PostgresConfig) (*sql.DB, error) {
 	db, err := sql.Open("pgx", config.String())
@@ -27,12 +18,12 @@ func Open(config PostgresConfig) (*sql.DB, error) {
 
 func DefaultPostgresConfig() PostgresConfig {
 	return PostgresConfig{
-		Host:     viper.GetString("DB_HOST"),
-		Port:     viper.GetString("DB_PORT"),
-		User:     viper.GetString("DB_USER"),
-		Password: viper.GetString("DB_PASSWORD"),
-		Database: viper.GetString("DB_NAME"),
-		SSLMode:  viper.GetString("DB_SSLMODE"),
+		Host:     configs.ReadKey("DB_HOST"),
+		Port:     configs.ReadKey("DB_PORT"),
+		User:     configs.ReadKey("DB_USER"),
+		Password: configs.ReadKey("DB_PASSWORD"),
+		Database: configs.ReadKey("DB_NAME"),
+		SSLMode:  configs.ReadKey("DB_SSLMODE"),
 	}
 }
 
