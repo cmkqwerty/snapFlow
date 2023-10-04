@@ -8,8 +8,9 @@ import (
 
 type Users struct {
 	Templates struct {
-		New    Template
-		SignIn Template
+		New     Template
+		SignIn  Template
+		UsersMe Template
 	}
 	UserService    *models.UserService
 	SessionService *models.SessionService
@@ -54,7 +55,6 @@ func (u Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	setCookie(w, CookieSession, session.Token)
-
 	http.Redirect(w, r, "/users/me", http.StatusFound)
 }
 
@@ -136,5 +136,5 @@ func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "Current user: %s\n", user.Email)
+	u.Templates.UsersMe.Execute(w, r, user)
 }
