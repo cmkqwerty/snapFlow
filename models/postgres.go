@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"github.com/cmkqwerty/snapFlow/configs"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/pressly/goose/v3"
 	"io/fs"
@@ -44,17 +43,6 @@ func MigrateFS(db *sql.DB, migrationsFS fs.FS, dir string) error {
 	}()
 
 	return Migrate(db, dir)
-}
-
-func DefaultPostgresConfig() PostgresConfig {
-	return PostgresConfig{
-		Host:     configs.ReadKey("DB_HOST"),
-		Port:     configs.ReadKey("DB_PORT"),
-		User:     configs.ReadKey("DB_USER"),
-		Password: configs.ReadKey("DB_PASSWORD"),
-		Database: configs.ReadKey("DB_NAME"),
-		SSLMode:  configs.ReadKey("DB_SSLMODE"),
-	}
 }
 
 type PostgresConfig struct {
