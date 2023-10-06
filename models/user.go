@@ -84,4 +84,6 @@ func (us *UserService) UpdatePassword(userID int, password string) error {
 	if err != nil {
 		return fmt.Errorf("update password: %w", err)
 	}
+
+	return nil
 }
