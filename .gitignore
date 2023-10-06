@@ -19,3 +19,8 @@
 
 # Go workspace file
 go.work
+
+# GoLand IDE
+.idea
+docker-compose.yml
+*.env
