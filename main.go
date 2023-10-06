@@ -131,6 +131,12 @@ func main() {
 	r.Get("/forgot-pw", usersC.ForgotPassword)
 	r.Post("/forgot-pw", usersC.ProcessForgotPassword)
 
+	usersC.Templates.CheckYourEmail = views.Must(views.ParseFS(templates.FS, "check-your-email.gohtml", "tailwind.gohtml"))
+
+	usersC.Templates.ResetPassword = views.Must(views.ParseFS(templates.FS, "reset-pw.gohtml", "tailwind.gohtml"))
+	r.Get("/reset-pw", usersC.ResetPassword)
+	r.Post("/reset-pw", usersC.ProcessResetPassword)
+
 	usersC.Templates.UsersMe = views.Must(views.ParseFS(templates.FS, "currentuser.gohtml", "tailwind.gohtml"))
 	r.Route("/users/me", func(r chi.Router) {
 		r.Use(um.RequireUser)

@@ -54,6 +54,7 @@ type Users struct {
 		UsersMe        Template
 		ForgotPassword Template
 		CheckYourEmail Template
+		ResetPassword  Template
 	}
 	UserService          *models.UserService
 	SessionService       *models.SessionService
@@ -209,6 +210,56 @@ func (u Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u.Templates.CheckYourEmail.Execute(w, r, data)
+}
+
+func (u Users) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Token string
+	}
+
+	data.Token = r.FormValue("token")
+	u.Templates.ResetPassword.Execute(w, r, data)
+}
+
+func (u Users) ProcessResetPassword(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Unable to parse form.", http.StatusBadRequest)
+		return
+	}
+
+	var data struct {
+		Token    string
+		Password string
+	}
+
+	data.Token = r.PostForm.Get("token")
+	data.Password = r.PostForm.Get("password")
+
+	user, err := u.PasswordResetService.Consume(data.Token)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+		return
+	}
+
+	err = u.UserService.UpdatePassword(user.ID, data.Password)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+		return
+	}
+
+	// Sign in
+	session, err := u.SessionService.Create(user.ID)
+	if err != nil {
+		fmt.Println(err)
+		http.Redirect(w, r, "/signin", http.StatusFound)
+		return
+	}
+
+	setCookie(w, CookieSession, session.Token)
+	http.Redirect(w, r, "/users/me", http.StatusFound)
 }
 
 func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
