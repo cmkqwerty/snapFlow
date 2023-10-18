@@ -2,9 +2,16 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
+)
+
+var (
+	ErrEmailTaken = errors.New("models: email address is already taken")
 )
 
 type User struct {
@@ -38,6 +45,12 @@ func (us *UserService) Create(email, password string) (*User, error) {
 
 	err = row.Scan(&user.ID)
 	if err != nil {
+		var pqErr *pgconn.PgError
+		if errors.As(err, &pqErr) {
+			if pqErr.Code == pgerrcode.UniqueViolation && pqErr.ConstraintName == "users_email_key" {
+				return nil, ErrEmailTaken
+			}
+		}
 		return nil, fmt.Errorf("create user: %w", err)
 	}
 
