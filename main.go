@@ -98,6 +98,7 @@ func main() {
 	csrfMw := csrf.Protect(
 		[]byte(csrfKey),
 		csrf.Secure(csrfSecure),
+		csrf.Path("/"),
 	)
 
 	usersC := controllers.Users{
@@ -152,7 +153,12 @@ func main() {
 	})
 
 	galleriesC.Templates.New = views.Must(views.ParseFS(templates.FS, "galleries/new.gohtml", "tailwind.gohtml"))
-	r.Get("/galleries/new", galleriesC.New)
+	r.Route("/galleries", func(r chi.Router) {
+		r.Group(func(r chi.Router) {
+			r.Use(um.RequireUser)
+			r.Get("/new", galleriesC.New)
+		})
+	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
