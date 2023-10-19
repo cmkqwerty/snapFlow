@@ -10,10 +10,6 @@ import (
 	"strings"
 )
 
-var (
-	ErrEmailTaken = errors.New("models: email address is already taken")
-)
-
 type User struct {
 	ID           int
 	Email        string
