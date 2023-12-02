@@ -32,7 +32,7 @@
     <div class="py-4">
         <h2>Dangerous Actions</h2>
         <form action="galleries/{{.ID}}/delete" method="post"
-        onsubmit="return confirm('Do you really want to delete this gallery?');">
+        onsubmit="return confirm('Are you sure you want to delete this gallery?');">
             <div class="hidden">
                 {{csrfField}}
             </div>
