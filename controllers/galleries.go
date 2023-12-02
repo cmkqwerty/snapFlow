@@ -6,7 +6,6 @@ import (
 	"github.com/cmkqwerty/snapFlow/errors"
 	"github.com/cmkqwerty/snapFlow/models"
 	"github.com/go-chi/chi/v5"
-	"math/rand"
 	"net/http"
 	"strconv"
 )
@@ -116,17 +115,29 @@ func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type Image struct {
+		GalleryID int
+		Filename  string
+	}
+
 	var data struct {
 		ID     int
 		Title  string
-		Images []string
+		Images []Image
 	}
 	data.ID = gallery.ID
 	data.Title = gallery.Title
-	for i := 0; i < 20; i++ {
-		w, h := rand.Intn(500)+200, rand.Intn(500)+200
-		mockImageURL := fmt.Sprintf("https://placehold.co/%dx%d", w, h)
-		data.Images = append(data.Images, mockImageURL)
+	images, err := g.GalleryService.Images(gallery.ID)
+	if err != nil {
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	for _, image := range images {
+		data.Images = append(data.Images, Image{
+			GalleryID: image.GalleryID,
+			Filename:  image.Filename,
+		})
 	}
 
 	g.Templates.Show.Execute(w, r, data)
@@ -145,6 +156,38 @@ func (g Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/galleries", http.StatusFound)
+}
+
+func (g Galleries) Image(w http.ResponseWriter, r *http.Request) {
+	filename := chi.URLParam(r, "filename")
+	galleryID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Invalid gallery id", http.StatusNotFound)
+		return
+	}
+
+	images, err := g.GalleryService.Images(galleryID)
+	if err != nil {
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	var requestedImage models.Image
+	imageFound := false
+
+	for _, image := range images {
+		if image.Filename == filename {
+			requestedImage = image
+			imageFound = true
+			break
+		}
+	}
+	if !imageFound {
+		http.Error(w, "Image not found", http.StatusNotFound)
+		return
+	}
+
+	http.ServeFile(w, r, requestedImage.Path)
 }
 
 type galleryOpt func(http.ResponseWriter, *http.Request, *models.Gallery) error
