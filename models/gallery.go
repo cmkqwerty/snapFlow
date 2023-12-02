@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -138,6 +140,23 @@ func (service *GalleryService) Images(id int) ([]Image, error) {
 	}
 
 	return images, nil
+}
+
+func (service *GalleryService) Image(id int, filename string) (Image, error) {
+	imagePath := filepath.Join(service.galleryDir(id), filename)
+	_, err := os.Stat(imagePath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return Image{}, ErrNotFound
+		}
+		return Image{}, fmt.Errorf("querying image: %w", err)
+	}
+
+	return Image{
+		GalleryID: id,
+		Path:      imagePath,
+		Filename:  filename,
+	}, nil
 }
 
 func (service *GalleryService) extensions() []string {
