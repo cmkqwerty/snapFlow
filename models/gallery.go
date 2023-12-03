@@ -4,7 +4,18 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
 )
+
+type Image struct {
+	GalleryID int
+	Path      string
+	Filename  string
+}
 
 type Gallery struct {
 	ID     int
@@ -14,6 +25,9 @@ type Gallery struct {
 
 type GalleryService struct {
 	DB *sql.DB
+
+	// ImagesDir is the path to the directory where images are stored. Defaults to "images/".
+	ImagesDir string
 }
 
 func (service *GalleryService) Create(title string, userID int) (*Gallery, error) {
@@ -105,4 +119,119 @@ func (service *GalleryService) Delete(id int) error {
 	}
 
 	return nil
+}
+
+func (service *GalleryService) Images(id int) ([]Image, error) {
+	globPattern := filepath.Join(service.galleryDir(id), "*")
+
+	files, err := filepath.Glob(globPattern)
+	if err != nil {
+		return nil, fmt.Errorf("retrieving gallery: %w", err)
+	}
+
+	var images []Image
+	for _, file := range files {
+		if hasExtension(file, service.extensions()) {
+			images = append(images, Image{
+				GalleryID: id,
+				Path:      file,
+				Filename:  filepath.Base(file),
+			})
+		}
+	}
+
+	return images, nil
+}
+
+func (service *GalleryService) Image(id int, filename string) (Image, error) {
+	imagePath := filepath.Join(service.galleryDir(id), filename)
+	_, err := os.Stat(imagePath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return Image{}, ErrNotFound
+		}
+		return Image{}, fmt.Errorf("querying image: %w", err)
+	}
+
+	return Image{
+		GalleryID: id,
+		Path:      imagePath,
+		Filename:  filename,
+	}, nil
+}
+
+func (service *GalleryService) CreateImage(id int, filename string, contents io.ReadSeeker) error {
+	err := checkContentType(contents, service.imageContentTypes())
+	if err != nil {
+		return fmt.Errorf("creating image: %w", err)
+	}
+
+	err = checkExtension(filename, service.extensions())
+	if err != nil {
+		return fmt.Errorf("creating image: %w", err)
+	}
+
+	galleryDir := service.galleryDir(id)
+
+	err = os.MkdirAll(galleryDir, 0755)
+	if err != nil {
+		return fmt.Errorf("creating image directory: %w", err)
+	}
+
+	imagePath := filepath.Join(galleryDir, filename)
+	dst, err := os.Create(imagePath)
+	if err != nil {
+		return fmt.Errorf("creating image: %w", err)
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, contents)
+	if err != nil {
+		return fmt.Errorf("copying contents of image: %w", err)
+	}
+
+	return nil
+}
+
+func (service *GalleryService) DeleteImage(id int, filename string) error {
+	image, err := service.Image(id, filename)
+	if err != nil {
+		return fmt.Errorf("deleting image: %w", err)
+	}
+
+	err = os.Remove(image.Path)
+	if err != nil {
+		return fmt.Errorf("deleting image: %w", err)
+	}
+
+	return nil
+}
+
+func (service *GalleryService) extensions() []string {
+	return []string{".jpg", ".jpeg", ".png", ".gif", ".avif"}
+}
+
+func (service *GalleryService) imageContentTypes() []string {
+	return []string{"image/jpeg", "image/png", "image/gif", "image/avif"}
+}
+
+func (service *GalleryService) galleryDir(id int) string {
+	imagesDir := service.ImagesDir
+	if imagesDir == "" {
+		imagesDir = "images"
+	}
+
+	return filepath.Join(imagesDir, fmt.Sprintf("gallery-%d", id))
+}
+
+func hasExtension(file string, extensions []string) bool {
+	for _, extension := range extensions {
+		file = strings.ToLower(file)
+		extension = strings.ToLower(extension)
+		if filepath.Ext(file) == extension {
+			return true
+		}
+	}
+
+	return false
 }

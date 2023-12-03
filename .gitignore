@@ -24,3 +24,6 @@ go.work
 .idea
 docker-compose.yml
 *.env
+
+# Test Images
+images/
