@@ -159,6 +159,20 @@ func (service *GalleryService) Image(id int, filename string) (Image, error) {
 	}, nil
 }
 
+func (service *GalleryService) DeleteImage(id int, filename string) error {
+	image, err := service.Image(id, filename)
+	if err != nil {
+		return fmt.Errorf("deleting image: %w", err)
+	}
+
+	err = os.Remove(image.Path)
+	if err != nil {
+		return fmt.Errorf("deleting image: %w", err)
+	}
+
+	return nil
+}
+
 func (service *GalleryService) extensions() []string {
 	return []string{".jpg", ".jpeg", ".png", ".gif", ".avif"}
 }
