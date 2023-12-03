@@ -47,7 +47,7 @@
     </div>
     <div class="py-4">
         <h2>Dangerous Actions</h2>
-        <form action="galleries/{{.ID}}/delete" method="post"
+        <form action="/galleries/{{.ID}}/delete" method="post"
         onsubmit="return confirm('Are you sure you want to delete this gallery?');">
             <div class="hidden">
                 {{csrfField}}
@@ -62,7 +62,7 @@
 {{template "footer" .}}
 
 {{define "delete_image_form"}}
-<form action="galleries/{{.GalleryID}}/images/{{.FilenameEscaped}}/delete" method="post"
+<form action="/galleries/{{.GalleryID}}/images/{{.FilenameEscaped}}/delete" method="post"
       onsubmit="return confirm('Are you sure you want to delete this image?');">
         {{csrfField}}
     <button type="submit" class="p-1 text-xs text-red-800 bg-red-100 border border-red-400 rounded">
@@ -72,7 +72,7 @@
 {{end}}
 
 {{define "upload_image_form"}}
-    <form action="galleries/{{.ID}}/images" method="post"
+    <form action="/galleries/{{.ID}}/images" method="post"
         enctype="multipart/form-data">
         {{csrfField}}
         <div class="py-2">
