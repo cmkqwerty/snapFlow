@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"github.com/cmkqwerty/snapFlow/context"
+	"github.com/cmkqwerty/snapFlow/errors"
 	"github.com/cmkqwerty/snapFlow/models"
 	"net/http"
 	"net/url"
@@ -88,8 +89,10 @@ func (u Users) Create(w http.ResponseWriter, r *http.Request) {
 
 	user, err := u.UserService.Create(data.Email, data.Password)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+		if errors.Is(err, models.ErrEmailTaken) {
+			err = errors.Public(err, "That email address is already taken.")
+		}
+		u.Templates.New.Execute(w, r, data, err)
 		return
 	}
 

@@ -2,6 +2,7 @@ package views
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/cmkqwerty/snapFlow/context"
 	"github.com/cmkqwerty/snapFlow/models"
@@ -11,17 +12,25 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"path"
 )
 
+type public interface {
+	Public() string
+}
+
 func ParseFS(fs fs.FS, pattern ...string) (Template, error) {
-	htmlTpl := template.New(pattern[0])
+	htmlTpl := template.New(path.Base(pattern[0]))
 	htmlTpl = htmlTpl.Funcs(
 		template.FuncMap{
 			"csrfField": func() (template.HTML, error) {
 				return "", fmt.Errorf("csrfField is not implemented")
 			},
-			"currentUser": func() (*models.User, error) {
-				return nil, fmt.Errorf("currentUser is not implemented")
+			"currentUser": func() (template.HTML, error) {
+				return "", fmt.Errorf("currentUser is not implemented")
+			},
+			"errors": func() []string {
+				return nil
 			},
 		},
 	)
@@ -40,7 +49,7 @@ type Template struct {
 	htmlTpl *template.Template
 }
 
-func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface{}) {
+func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface{}, errs ...error) {
 	htmlTpl, err := t.htmlTpl.Clone()
 	if err != nil {
 		log.Printf("cloning template: %v", err)
@@ -48,6 +57,7 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		return
 	}
 
+	errMssgs := errMessages(errs...)
 	htmlTpl = htmlTpl.Funcs(
 		template.FuncMap{
 			"csrfField": func() template.HTML {
@@ -55,6 +65,9 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 			},
 			"currentUser": func() *models.User {
 				return context.User(r.Context())
+			},
+			"errors": func() []string {
+				return errMssgs
 			},
 		},
 	)
@@ -78,4 +91,18 @@ func Must(t Template, err error) Template {
 	}
 
 	return t
+}
+
+func errMessages(errs ...error) []string {
+	var errMessages []string
+	for _, err := range errs {
+		var pubErr public
+		if errors.As(err, &pubErr) {
+			errMessages = append(errMessages, pubErr.Public())
+		} else {
+			fmt.Println(err)
+			errMessages = append(errMessages, "Something went wrong. Please try again later.")
+		}
+	}
+	return errMessages
 }

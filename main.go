@@ -85,6 +85,10 @@ func main() {
 		DB: db,
 	}
 
+	galleryService := &models.GalleryService{
+		DB: db,
+	}
+
 	emailService := models.NewEmailService(smtpCfg)
 
 	um := controllers.UserMiddleware{
@@ -94,6 +98,7 @@ func main() {
 	csrfMw := csrf.Protect(
 		[]byte(csrfKey),
 		csrf.Secure(csrfSecure),
+		csrf.Path("/"),
 	)
 
 	usersC := controllers.Users{
@@ -101,6 +106,10 @@ func main() {
 		SessionService:       sessionService,
 		PasswordResetService: passwordResetService,
 		EmailService:         emailService,
+	}
+
+	galleriesC := controllers.Galleries{
+		GalleryService: galleryService,
 	}
 
 	r := chi.NewRouter()
@@ -141,6 +150,26 @@ func main() {
 	r.Route("/users/me", func(r chi.Router) {
 		r.Use(um.RequireUser)
 		r.Get("/", usersC.CurrentUser)
+	})
+
+	galleriesC.Templates.New = views.Must(views.ParseFS(templates.FS, "galleries/new.gohtml", "tailwind.gohtml"))
+	galleriesC.Templates.Edit = views.Must(views.ParseFS(templates.FS, "galleries/edit.gohtml", "tailwind.gohtml"))
+	galleriesC.Templates.Index = views.Must(views.ParseFS(templates.FS, "galleries/index.gohtml", "tailwind.gohtml"))
+	galleriesC.Templates.Show = views.Must(views.ParseFS(templates.FS, "galleries/show.gohtml", "tailwind.gohtml"))
+	r.Route("/galleries", func(r chi.Router) {
+		r.Get("/{id}", galleriesC.Show)
+		r.Get("/{id}/images/{filename}", galleriesC.Image)
+		r.Group(func(r chi.Router) {
+			r.Use(um.RequireUser)
+			r.Get("/", galleriesC.Index)
+			r.Get("/new", galleriesC.New)
+			r.Post("/", galleriesC.Create)
+			r.Get("/{id}/edit", galleriesC.Edit)
+			r.Post("/{id}", galleriesC.Update)
+			r.Post("/{id}/delete", galleriesC.Delete)
+			r.Post("/{id}/images", galleriesC.UploadImage)
+			r.Post("/{id}/images/{filename}/delete", galleriesC.DeleteImage)
+		})
 	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {

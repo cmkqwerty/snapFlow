@@ -1,4 +1,4 @@
-# SnapFlow [in development]
+# SnapFlow
 
 ### Overview
 SnapFlow is a backend platform designed to enhance the experience of sharing photo galleries with friends. 
